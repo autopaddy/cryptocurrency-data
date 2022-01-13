@@ -8,4 +8,4 @@ build:
 
 .PHONY: run
 run:
-	podman run -ti --rm -e CMC_API_KEY=$(CMC_API_KEY) -v ./:$(ROOTDIR) $(TAG):$(VERSION) /bin/ash -c "cd $(ROOTDIR) && python $(ROOTDIR)/generate.py"
+	podman run -ti --rm -v ./:$(ROOTDIR) $(TAG):$(VERSION) /bin/ash -c "cd $(ROOTDIR) && CMC_API_KEY=$(CMC_API_KEY) python $(ROOTDIR)/generate.py"
