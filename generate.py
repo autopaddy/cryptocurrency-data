@@ -76,8 +76,12 @@ def parseData(data):
     # Create the main manifest file ( unique ID,  coinmarketcap ID, name, symbol, slug, iconSrc, color )
     # Create individual JSON files for each coin containing price data.
 if __name__ == "__main__":
-    # DO NOT COMMIT THIS!!
-    data = getData(os.environ.get('CMC_API_KEY'))
+    key = os.environ.get('CMC_API_KEY')
+    if not key:
+        print('No key was provided - exiting!')
+        exit(1)
+
+    data = getData(key)
     manifest = []
     coins = []
 
