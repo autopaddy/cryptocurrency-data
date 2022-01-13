@@ -125,6 +125,13 @@ def processSpotHQIcons(manifest):
         for item in manifest:
             if any(d['name'].lower() == item['name'].lower() and d['symbol'].lower() == item['symbol'].lower() for d in contents):
                 print(f"Adding spotHQ icon for {item['name']} to the manifest")
+
+                # Find the color entry in the spothq manifest and use it for our entry.
+                for _item in contents:
+                    if (_item['name'] == item['name']):
+                        item['color'] = _item['color']
+                        break
+
                 with open(f'{dir}/cryptocurrency-icons-master/svg/color/{item["symbol"].lower()}.svg', 'rb') as svgFile:
                     svg = svgFile.read()
                     svg64 = f'data:image/svg+xml;base64,{base64.b64encode(svg)}'
