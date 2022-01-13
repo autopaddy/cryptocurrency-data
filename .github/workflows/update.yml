@@ -27,7 +27,7 @@ jobs:
       # Runs a single command using the runners shell
       - name: update manifests
         env:
-          credentials: ${{ secrets.CMC_API_KEY }}
+          CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
         run: make run
       
       - name: commit changes
