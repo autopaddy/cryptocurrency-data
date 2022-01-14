@@ -28,6 +28,7 @@ jobs:
       - name: update manifests
         env:
           CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
+          CCA_API_KEY: ${{ secrets.CCA_API_KEY }}
         run: make run
       
       - name: commit changes
