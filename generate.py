@@ -134,7 +134,7 @@ def processSpotHQIcons(manifest):
 
                 with open(f'{dir}/cryptocurrency-icons-master/svg/color/{item["symbol"].lower()}.svg', 'rb') as svgFile:
                     svg = svgFile.read()
-                    svg64 = f'data:image/svg+xml;base64,{base64.b64encode(svg)}'
+                    svg64 = f'data:image/svg+xml;base64,{base64.b64encode(svg).decode("ascii")}'
                     item['icon'] = svg64
 
     return manifest
