@@ -22,9 +22,9 @@ def _shellCmd(cmd):
     return out.decode('ascii'), err
 
 
-def formatPriceEntry(_, date, price):
+def formatPriceEntry(date, price):
     # Format needed when writing to file
-    return {date: {price: price}}
+    return {date: {"price": price}}
 
 
 def getData(key):
@@ -86,7 +86,7 @@ def parseData(data):
             "id": data["id"],
             "name": data["name"],
             "symbol": data["symbol"],
-            "rank": data["rank"],
+            "rank": data["cmc_rank"],
             "color": getDominantColor(data["id"]),
             "icon": ''
         },
@@ -146,10 +146,6 @@ if __name__ == "__main__":
         print('No key was provided - exiting!')
         exit(1)
 
-    manifest = []
-    with open('manifest.json', 'r') as manifestJson:
-        manifest = json.loads(manifestJson.read())
-
     data = getData(key)
     manifest = []
     coins = []
@@ -165,7 +161,7 @@ if __name__ == "__main__":
 
     for coin in coins:
         finalCoin = []
-        finalCoin.append(formatPriceEntry(coin))
+        finalCoin.append(formatPriceEntry(coin["date"], coin["price"]))
 
         file = f"cryptocurrency/{coin['id']}.json"
         # Get all the current coin data up to this point
