@@ -22,6 +22,19 @@ def _shellCmd(cmd):
     return out.decode('ascii'), err
 
 
+def _httpRequest(url, headers={}, params={}):
+    session = Session()
+    session.headers.update(headers)
+    response, err = False, False
+
+    try:
+        response = session.get(url, params=params)
+    except (ConnectionError, Timeout, TooManyRedirects) as e:
+        err = e
+
+    return response, err
+
+
 def formatPriceEntry(date, price):
     # Format needed when writing to file
     return {date: {"price": price}}
@@ -41,18 +54,13 @@ def getData(key):
         'X-CMC_PRO_API_KEY': key,
     }
 
-    session = Session()
-    session.headers.update(headers)
+    response, err = _httpRequest(url, headers, parameters)
 
-    try:
-        response = session.get(url, params=parameters)
-        return json.loads(response.text)["data"]
-
-    except (ConnectionError, Timeout, TooManyRedirects) as e:
-        # Can't recover if we error here.  Exit the program.
-        print(f"ERROR: Failed to fetch coin data from Coinmarketcap: {e}")
+    if err:
+        print(f'ERROR: Failed to get cryptocurrency data from CMC: {err}')
         exit(1)
 
+    return json.loads(response.text)["data"]
 
 def getDominantColor(id):
     # This script uses ImageMagick to process the image for its 2 most dominant colors.
@@ -140,18 +148,92 @@ def processSpotHQIcons(manifest):
     return manifest
 
 
+def generateCurrencyManifest(key):
+    template = [
+        {"code": "USD", "symbol": "$",
+            "name": "United States Dollar", "exrate": 1, "icon": ""},
+        {"code": "AUD", "symbol": "$",
+            "name": "Australian Dollar", "exrate": 1, "icon": ""},
+        {"code": "CAD", "symbol": "$", "name": "Canada Dollar", "exrate": 1, "icon": ""},
+        {"code": "CHF", "symbol": "CHF",
+            "name": "Switzerland Franc", "exrate": 1, "icon": ""},
+        {"code": "CNY", "symbol": "¥",
+            "name": "China Yuan Renminbi", "exrate": 1, "icon": ""},
+        {"code": "DKK", "symbol": "kr",
+            "name": "Denmark Krone", "exrate": 1, "icon": ""},
+        {"code": "EUR", "symbol": "€",
+            "name": "Euro Member Countries", "exrate": 1, "icon": ""},
+        {"code": "GBP", "symbol": "£",
+            "name": "Great British Pound", "exrate": 1, "icon": ""},
+        {"code": "HKD", "symbol": "$",
+            "name": "Hong Kond Dollar", "exrate": 1, "icon": ""},
+        {"code": "IDR", "symbol": "Rp",
+            "name": "Indonesia Rupiah", "exrate": 1, "icon": ""},
+        {"code": "INR", "symbol": "₹", "name": "India Rupee", "exrate": 1, "icon": ""},
+        {"code": "JPY", "symbol": "¥", "name": "Japan Yen", "exrate": 1, "icon": ""},
+        {"code": "KRW", "symbol": "₩", "name": "Korea Won", "exrate": 1, "icon": ""},
+        {"code": "MYR", "symbol": "RM",
+            "name": "Malaysia Ringgit", "exrate": 1, "icon": ""},
+        {"code": "PHP", "symbol": "₱",
+            "name": "Philippines Peso", "exrate": 1, "icon": ""},
+        {"code": "SEK", "symbol": "kr",
+            "name": "Sweden Krona", "exrate": 1, "icon": ""},
+        {"code": "SGD", "symbol": "$",
+            "name": "Singapore Dollar", "exrate": 1, "icon": ""},
+        {"code": "THB", "symbol": "฿", "name": "Thailand Baht", "exrate": 1, "icon": ""}
+    ]
+    manifest = []
+
+    for entry in template:
+        # Going to use icon from TerraStation temporarily.
+        iconUrl = f'https://assets.terra.money/icon/svg/Terra/{entry["code"][:-1]}T.svg'
+        exRateUrl = 'https://free.currconv.com/api/v7/convert'
+
+        response, err = _httpRequest(
+            exRateUrl, {}, {'q': f'USD_{entry["code"]}', "compact": "ultra", "apiKey": key})
+
+        if err:
+            print(
+                f'WARNING: Unable to get exchange rate for {entry["code"]}: {err}')
+            # Ignore this entry
+            continue
+
+        exrate = json.loads(response.text)
+        entry['exrate'] = exrate[f'USD_{entry["code"]}']
+
+        # Get the icon for the fiat
+        response, err = _httpRequest(iconUrl)
+
+        if err:
+            print(f'WARNING: Unable to get icon for {entry["code"]}: {err}')
+            # Ignore this entry
+            continue
+
+        svgBytes = response.text.encode('ascii')
+        entry['icon'] = f'data:image/svg+xml;base64,{base64.b64encode(svgBytes).decode("ascii")}'
+        manifest.append(entry)
+
+    return manifest
+
+
 if __name__ == "__main__":
-    key = os.environ.get('CMC_API_KEY')
-    if not key:
-        print('No key was provided - exiting!')
+    cmc = os.environ.get('CMC_API_KEY')
+    if not cmc:
+        print('ERROR: No CMC_API_KEY was set!')
         exit(1)
 
-    data = getData(key)
+    cca = os.environ.get('CCA_API_KEY')
+    if not cca:
+        print('ERROR: No CCA_API_KEY was set!')
+        exit(1)
+
+    cryptocurrencyData = getData(cmc)
+
     manifest = []
     coins = []
 
     with concurrent.futures.ProcessPoolExecutor(40) as e:
-        futures = [e.submit(parseData, entry) for entry in data]
+        futures = [e.submit(parseData, entry) for entry in cryptocurrencyData]
         for r in concurrent.futures.as_completed(futures):
             result = r.result()
             print(f"proccessing {result[0]['name']}")
@@ -183,5 +265,11 @@ if __name__ == "__main__":
     manifest.sort(key=lambda x: x['rank'], reverse=False)
 
     # Overwrite the existing manifest JSON
-    with open('manifest.json', 'w') as manifestJson:
+    with open('cryptocurrency.json', 'w') as manifestJson:
         manifestJson.write(json.dumps(manifest))
+
+    currencyManifest = generateCurrencyManifest(cca)
+
+    # Write currency manifest to disk
+    with open('currency.json', 'w') as manifestJson:
+        manifestJson.write(json.dumps(currencyManifest))
