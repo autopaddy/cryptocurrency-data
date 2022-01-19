@@ -172,8 +172,6 @@ def generateCurrencyManifest(key):
         {"code": "INR", "symbol": "₹", "name": "India Rupee", "exrate": 1, "icon": ""},
         {"code": "JPY", "symbol": "¥", "name": "Japan Yen", "exrate": 1, "icon": ""},
         {"code": "KRW", "symbol": "₩", "name": "Korea Won", "exrate": 1, "icon": ""},
-        {"code": "MYR", "symbol": "RM",
-            "name": "Malaysia Ringgit", "exrate": 1, "icon": ""},
         {"code": "PHP", "symbol": "₱",
             "name": "Philippines Peso", "exrate": 1, "icon": ""},
         {"code": "SEK", "symbol": "kr",
