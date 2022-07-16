@@ -1,3 +1,8 @@
+# DISCONTINUED
+### NOTE:  You may still find value in this project in the `generate.py` script for pulling in icons from CoinMarketCap and identifying the dominant colors for all the icons.  Alternatively you can find these colors in the `cryptocurrency.json` manifest.
+
+
+
 # cryptocurrency-data
 
 This repository is meant to provide cryptocurrency data for hobbyists looking to build their own websites.  It provides basic data and access to all of the cryptocurrency icons ( available on CoinMarketcap ).
